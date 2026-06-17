@@ -10,6 +10,7 @@ from app.api.routes.youtube import router as youtube_router
 from app.core.config import settings
 from app.core.logger import get_logger
 from app.db.database import Base, engine
+from app.api.routes.notes import router as notes_router
 
 # Import services to trigger singleton init on startup
 from app.services.embedding_service import embedding_service  # noqa
@@ -42,6 +43,7 @@ app.include_router(auth_router, prefix="/api")
 app.include_router(youtube_router, prefix="/api")
 app.include_router(chat_router, prefix="/api")
 app.include_router(rag_router, prefix="/api")
+app.include_router(notes_router, prefix="/api")
 
 
 @app.get("/health")
