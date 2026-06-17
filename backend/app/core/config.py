@@ -16,11 +16,10 @@ class Settings(BaseSettings):
     EMBEDDING_MODEL: str = "sentence-transformers/all-MiniLM-L6-v2"
     LLM_MODEL: str = "llama-3.1-8b-instant"
     
-# Chunking
+    YOUTUBE_API_KEY: str
     CHUNK_SIZE: int = 800
     CHUNK_OVERLAP: int = 200
 
-# Retrieval
     RETRIEVAL_TOP_K: int = 4  
     SECRET_KEY: str
     ALGORITHM: str = "HS256"

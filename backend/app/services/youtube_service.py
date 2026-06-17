@@ -10,6 +10,7 @@ from app.services.chunking_service import ChunkingService
 from app.services.embedding_service import embedding_service
 from app.services.transcript_service import TranscriptException, TranscriptService
 from app.utils.youtube_parser import extract_video_id
+from app.services.title_service import TitleService
 
 logger = get_logger(__name__)
 
@@ -51,14 +52,17 @@ class YouTubeService:
             _, transcript = await TranscriptService.get_transcript(data.youtube_url)
         except TranscriptException as e:
             raise YouTubeServiceException(e.message, e.status_code)
-
+        
+        
+        
+        title = await TitleService.get_title(data.youtube_url)
         # 4. Create video record (status=processing)
         namespace = f"user_{user_id}_video_{youtube_id}"
         video = await self.video_repo.create(
             user_id=user_id,
             youtube_id=youtube_id,
             youtube_url=data.youtube_url,
-            title=f"Video {youtube_id}",  # Update with actual title later
+            title=title,  # Update with actual title later
             transcript=transcript,
             pinecone_namespace=namespace,
         )
