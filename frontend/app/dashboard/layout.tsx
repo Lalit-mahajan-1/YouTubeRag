@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import Sidebar from "@/components/dashboard/Sidebar";
 import NewChatModal from "@/components/dashboard/NewChatModal";
-import { Loader2 } from "lucide-react";
 
 export default function DashboardLayout({
   children,
@@ -13,8 +13,8 @@ export default function DashboardLayout({
 }) {
   const { isLoading, isAuthenticated } = useAuth(true);
   const [modalOpen, setModalOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
 
-  // ⚠️ Show loader while checking auth
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-950">
@@ -23,13 +23,15 @@ export default function DashboardLayout({
     );
   }
 
-  if (!isAuthenticated) {
-    return null;
-  }
+  if (!isAuthenticated) return null;
 
   return (
     <div className="flex h-screen bg-gray-900">
-      <Sidebar onNewChat={() => setModalOpen(true)} />
+      <Sidebar
+        onNewChat={() => setModalOpen(true)}
+        collapsed={collapsed}
+        onToggle={() => setCollapsed((v) => !v)}
+      />
       <main className="flex-1 overflow-hidden">{children}</main>
       <NewChatModal isOpen={modalOpen} onClose={() => setModalOpen(false)} />
     </div>
