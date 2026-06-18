@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, ForeignKey, String, Text, UniqueConstraint, Integer
+from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -11,6 +11,7 @@ from app.db.database import Base
 if TYPE_CHECKING:
     from app.db.models.user import User
     from app.db.models.chat import Chat
+    from app.db.models.playlist import Playlist
 
 
 class VideoStatus:
@@ -35,13 +36,21 @@ class Video(Base):
         index=True,
     )
 
+    # NEW: Link to playlist (nullable for standalone videos)
+    playlist_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("playlists.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
+    )
+
     youtube_id: Mapped[str] = mapped_column(String(20), nullable=False, index=True)
     youtube_url: Mapped[str] = mapped_column(String(500), nullable=False)
-    title: Mapped[str] = mapped_column(String(500), nullable=True)
+    title: Mapped[str | None] = mapped_column(String(500), nullable=True)
     thumbnail_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
-    duration: Mapped[int | None] = mapped_column(Integer, nullable=True)  # seconds
+    duration: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
-    transcript: Mapped[str] = mapped_column(Text, nullable=True)
+    transcript: Mapped[str | None] = mapped_column(Text, nullable=True)
     pinecone_namespace: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
 
     status: Mapped[str] = mapped_column(
@@ -58,8 +67,8 @@ class Video(Base):
         onupdate=lambda: datetime.now(timezone.utc),
     )
 
-    # Relationships
     user: Mapped["User"] = relationship(back_populates="videos")
+    playlist: Mapped["Playlist | None"] = relationship(back_populates="videos")
     chats: Mapped[list["Chat"]] = relationship(
         back_populates="video", cascade="all, delete-orphan"
     )

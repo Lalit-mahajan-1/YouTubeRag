@@ -9,8 +9,12 @@ from app.services.chat_service import ChatService
 from app.services.rag_service import RAGService
 from app.services.youtube_service import YouTubeService
 from app.services.notes_service import NotesService
+from app.services.playlist_service import PlaylistService
+
 
 bearer_scheme = HTTPBearer()
+async def get_playlist_service(db: AsyncSession = Depends(get_db)) -> PlaylistService:
+    return PlaylistService(db)
 
 async def get_notes_service(db: AsyncSession = Depends(get_db)) -> NotesService:
     return NotesService(db)

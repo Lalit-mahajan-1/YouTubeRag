@@ -57,8 +57,8 @@ export default function NotesPanel({ videoId, videoTitle, onClose }: Props) {
   return (
     <div className="w-1/2 h-screen bg-gray-950 border-l border-gray-800 flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-800">
-        <div className="flex items-center gap-2">
+      <div className="flex justify-rightend p-4 border-b border-gray-800">
+        <div className="flex items gap-2">
           <FileText className="text-blue-500" size={20} />
           <h2 className="text-white font-semibold">Generated Notes</h2>
         </div>

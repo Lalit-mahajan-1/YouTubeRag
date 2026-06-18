@@ -11,6 +11,7 @@ import {
   Trash2,
   LogOut,
   Loader2,
+  ListVideo,
 } from "lucide-react";
 import { toast } from "sonner";
 import { chatService } from "@/services/chat.service";
@@ -24,7 +25,19 @@ interface Props {
   onToggle: () => void;
 }
 
-export default function Sidebar({ onNewChat, collapsed, onToggle }: Props) {
+interface Props {
+  onNewChat: () => void;
+  onNewPlaylist: () => void; // ✅ NEW
+  collapsed: boolean;
+  onToggle: () => void;
+}
+
+export default function Sidebar({
+  onNewChat,
+  onNewPlaylist,
+  collapsed,
+  onToggle,
+}: Props) {
   const router = useRouter();
   const params = useParams();
   const { user, logout } = useAuthStore();
@@ -70,7 +83,7 @@ export default function Sidebar({ onNewChat, collapsed, onToggle }: Props) {
   };
 
   const filteredChats = chats.filter((c) =>
-    (c.title || "").toLowerCase().includes(search.toLowerCase())
+    (c.title || "").toLowerCase().includes(search.toLowerCase()),
   );
 
   // ===== COLLAPSED SIDEBAR =====
@@ -95,6 +108,14 @@ export default function Sidebar({ onNewChat, collapsed, onToggle }: Props) {
           <SquarePen size={20} className="text-gray-300" />
         </button>
 
+        {/* Playlist */}
+        <button
+          onClick={onNewPlaylist}
+          className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-gray-800 transition mb-2"
+          title="New playlist"
+        >
+          <ListVideo size={20} className="text-purple-400" />
+        </button>
         {/* Search */}
         <button
           onClick={() => {
@@ -136,7 +157,9 @@ export default function Sidebar({ onNewChat, collapsed, onToggle }: Props) {
     <aside className="w-72 h-screen bg-gray-950 border-r border-gray-800 flex flex-col">
       {/* Top Bar */}
       <div className="flex items-center justify-between p-3 border-b border-gray-800/50">
-        <span className="text-white font-semibold text-sm px-2">YouTube RAG</span>
+        <span className="text-white font-semibold text-sm px-2">
+          YouTube RAG
+        </span>
         <button
           onClick={onToggle}
           className="p-2 rounded-lg hover:bg-gray-800 transition"
@@ -156,6 +179,14 @@ export default function Sidebar({ onNewChat, collapsed, onToggle }: Props) {
           New chat
         </button>
 
+        <button
+          onClick={onNewPlaylist}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-800 text-gray-200 text-sm font-medium transition"
+        >
+          <ListVideo size={16} className="text-purple-400" />
+          New playlist
+        </button>
+        
         <button
           onClick={() => setShowSearch((v) => !v)}
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-800 text-gray-200 text-sm font-medium transition"

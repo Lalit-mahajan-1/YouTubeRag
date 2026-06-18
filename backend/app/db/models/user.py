@@ -12,13 +12,19 @@ from app.db.database import Base
 if TYPE_CHECKING:
     from app.db.models.video import Video
     from app.db.models.chat import Chat
-
-
+    from app.db.models.video import Video
+    from app.db.models.chat import Chat
+    from app.db.models.playlist import Playlist
+    
+    
 class User(Base):
     __tablename__ = "users"
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    playlists: Mapped[list["Playlist"]] = relationship(
+    back_populates="user", cascade="all, delete-orphan"
     )
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
     username: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=False)

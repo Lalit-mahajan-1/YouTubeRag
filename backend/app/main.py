@@ -11,10 +11,13 @@ from app.core.config import settings
 from app.core.logger import get_logger
 from app.db.database import Base, engine
 from app.api.routes.notes import router as notes_router
+from app.api.routes.playlist import router as playlist_router
 
 # Import services to trigger singleton init on startup
 from app.services.embedding_service import embedding_service  # noqa
 from app.services.llm_service import llm_service  # noqa
+from app.services.keyword_service import keyword_service 
+
 
 logger = get_logger(__name__)
 
@@ -44,6 +47,7 @@ app.include_router(youtube_router, prefix="/api")
 app.include_router(chat_router, prefix="/api")
 app.include_router(rag_router, prefix="/api")
 app.include_router(notes_router, prefix="/api")
+app.include_router(playlist_router, prefix="/api")
 
 
 @app.get("/health")

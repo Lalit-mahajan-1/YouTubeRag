@@ -5,6 +5,7 @@ import { Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import Sidebar from "@/components/dashboard/Sidebar";
 import NewChatModal from "@/components/dashboard/NewChatModal";
+import NewPlaylistModal from "@/components/dashboard/NewPlaylistModal";
 
 export default function DashboardLayout({
   children,
@@ -12,7 +13,8 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const { isLoading, isAuthenticated } = useAuth(true);
-  const [modalOpen, setModalOpen] = useState(false);
+  const [chatModalOpen, setChatModalOpen] = useState(false);
+  const [playlistModalOpen, setPlaylistModalOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
 
   if (isLoading) {
@@ -28,12 +30,21 @@ export default function DashboardLayout({
   return (
     <div className="flex h-screen bg-gray-900">
       <Sidebar
-        onNewChat={() => setModalOpen(true)}
+        onNewChat={() => setChatModalOpen(true)}
+        onNewPlaylist={() => setPlaylistModalOpen(true)}
         collapsed={collapsed}
         onToggle={() => setCollapsed((v) => !v)}
       />
       <main className="flex-1 overflow-hidden">{children}</main>
-      <NewChatModal isOpen={modalOpen} onClose={() => setModalOpen(false)} />
+
+      <NewChatModal
+        isOpen={chatModalOpen}
+        onClose={() => setChatModalOpen(false)}
+      />
+      <NewPlaylistModal
+        isOpen={playlistModalOpen}
+        onClose={() => setPlaylistModalOpen(false)}
+      />
     </div>
   );
 }

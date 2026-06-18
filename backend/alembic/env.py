@@ -1,3 +1,9 @@
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+
 import asyncio
 from logging.config import fileConfig
 
@@ -5,49 +11,38 @@ from sqlalchemy import pool
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from alembic import context
+
 from app.core.config import settings
 from app.db.database import Base
-from app.db.models import user  # import all models so alembic sees them
+from app.db.models import user, video, chat, message, playlist  # noqa
 
 config = context.config
-fileConfig(config.config_file_name)
+
+if config.config_file_name is not None:
+    fileConfig(config.config_file_name)
 
 target_metadata = Base.metadata
 
-# Use DIRECT_URL for migrations (session mode, no pgbouncer)
-MIGRATION_URL = settings.DIRECT_URL.replace(
+DATABASE_URL = settings.DATABASE_URL.replace(
     "postgresql://", "postgresql+asyncpg://"
-)
+).split("?")[0]
 
 
-def run_migrations_offline():
-    context.configure(
-        url=MIGRATION_URL,
-        target_metadata=target_metadata,
-        literal_binds=True,
-        dialect_opts={"paramstyle": "named"},
-    )
+def do_run_migrations(connection):
+    context.configure(connection=connection, target_metadata=target_metadata)
     with context.begin_transaction():
         context.run_migrations()
 
 
-async def run_migrations_online():
-    connectable = create_async_engine(MIGRATION_URL, poolclass=pool.NullPool)
-
+async def run_async_migrations():
+    connectable = create_async_engine(DATABASE_URL, poolclass=pool.NullPool)
     async with connectable.connect() as connection:
-        await connection.run_sync(
-            lambda conn: context.configure(
-                connection=conn,
-                target_metadata=target_metadata,
-            )
-        )
-        async with connection.begin():
-            await connection.run_sync(lambda conn: context.run_migrations())
-
+        await connection.run_sync(do_run_migrations)
     await connectable.dispose()
 
 
-if context.is_offline_mode():
-    run_migrations_offline()
-else:
-    asyncio.run(run_migrations_online())
+def run_migrations_online():
+    asyncio.run(run_async_migrations())
+
+
+run_migrations_online()
