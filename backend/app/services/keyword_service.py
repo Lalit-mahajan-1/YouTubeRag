@@ -1,60 +1,44 @@
-from keybert import KeyBERT
+import json
 
 from app.core.logger import get_logger
+from app.services.llm_service import llm_service
 
 logger = get_logger(__name__)
 
 
 class KeywordService:
-    """Singleton — loads KeyBERT model once at startup."""
-
-    _instance = None
-    _initialized = False
-
-    def __new__(cls):
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-        return cls._instance
-
-    def __init__(self):
-        if self._initialized:
-            return
-
-        logger.info("Initializing KeyBERT model...")
-        # Uses sentence-transformers under the hood (same model you already have)
-        self.model = KeyBERT(model="sentence-transformers/all-MiniLM-L6-v2")
-        self._initialized = True
-        logger.info("KeyBERT ready")
-
-    def extract_keywords(
-        self, text: str, top_n: int = 8
-    ) -> list[str]:
-        """
-        Extract top N keywords/keyphrases from text.
-
-        Returns list of keywords (e.g., ["jwt auth", "tokens", "security"])
-        """
+    @staticmethod
+    async def extract_keywords(text: str, top_n: int = 8) -> list[str]:
+        """Extract keywords using Groq LLM."""
         if not text or not text.strip():
             return []
 
-        try:
-            # Extract keyphrases of 1-2 words, avoiding duplicates
-            keywords = self.model.extract_keywords(
-                text,
-                keyphrase_ngram_range=(1, 2),
-                stop_words="english",
-                top_n=top_n,
-                use_mmr=True,  # Maximal Marginal Relevance for diversity
-                diversity=0.5,
-            )
+        snippet = text[:2000]
 
-            # Returns list of tuples [(keyword, score), ...]
-            return [kw for kw, _ in keywords]
+        prompt = f"""Extract exactly {top_n} keywords or short keyphrases (1-3 words each) from this text.
+Return ONLY a JSON array of strings, nothing else.
+
+Text:
+{snippet}
+
+Output (JSON array only):"""
+
+        try:
+            response = await llm_service.generate(prompt)
+            response = response.strip()
+
+            if response.startswith("```"):
+                response = response.split("```")[1]
+                if response.startswith("json"):
+                    response = response[4:]
+            response = response.strip()
+
+            keywords = json.loads(response)
+            return keywords[:top_n] if isinstance(keywords, list) else []
 
         except Exception as e:
             logger.error(f"Keyword extraction failed: {e}")
             return []
 
 
-# Global singleton
 keyword_service = KeywordService()

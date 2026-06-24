@@ -121,9 +121,7 @@ class PlaylistService:
             # Extract keywords from transcript
             keywords = []
             if video.transcript:
-                keywords = keyword_service.extract_keywords(
-                    video.transcript, top_n=8
-                )
+                keywords = await keyword_service.extract_keywords(video.transcript, top_n=8)
 
             await self.db.commit()
 
