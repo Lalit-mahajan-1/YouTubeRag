@@ -5,6 +5,9 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     APP_NAME: str = "YouTube RAG"
+    
+    FRONTEND_API_DEV: str
+    FRONTEND_API_PROD: str
     DEBUG: bool = False
     CHUNK_SIZE: int = 800
     CHUNK_OVERLAP: int = 200 
