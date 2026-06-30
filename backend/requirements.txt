@@ -38,3 +38,5 @@ google-api-python-client==2.149.0
 
 # PDF
 reportlab==4.2.5
+
+langgraph==0.2.50

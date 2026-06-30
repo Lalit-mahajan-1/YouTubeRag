@@ -17,6 +17,7 @@ from app.api.routes.playlist import router as playlist_router
 from app.services.embedding_service import embedding_service  # noqa
 from app.services.llm_service import llm_service  # noqa
 from app.services.keyword_service import keyword_service 
+from app.api.routes.agent import router as agent_router
 
 
 logger = get_logger(__name__)
@@ -51,7 +52,7 @@ app.include_router(chat_router, prefix="/api")
 app.include_router(rag_router, prefix="/api")
 app.include_router(notes_router, prefix="/api")
 app.include_router(playlist_router, prefix="/api")
-
+app.include_router(agent_router, prefix="/api")
 
 @app.get("/health")
 async def health():

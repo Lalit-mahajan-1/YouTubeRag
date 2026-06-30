@@ -15,19 +15,15 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { chatService } from "@/services/chat.service";
+import { playlistService } from "@/services/playlist.service";
 import { useAuthStore } from "@/store/authStore";
 import { Chat } from "@/types/chat";
+import { Playlist } from "@/types/playlist";
 import { getErrorMessage } from "@/lib/helpers";
 
 interface Props {
   onNewChat: () => void;
-  collapsed: boolean;
-  onToggle: () => void;
-}
-
-interface Props {
-  onNewChat: () => void;
-  onNewPlaylist: () => void; // ✅ NEW
+  onNewPlaylist: () => void;
   collapsed: boolean;
   onToggle: () => void;
 }
@@ -42,20 +38,26 @@ export default function Sidebar({
   const params = useParams();
   const { user, logout } = useAuthStore();
   const [chats, setChats] = useState<Chat[]>([]);
+  const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [showSearch, setShowSearch] = useState(false);
 
   const activeChatId = params?.chatId as string;
+  const activePlaylistId = params?.playlistId as string;
 
   useEffect(() => {
-    loadChats();
+    loadAll();
   }, []);
 
-  const loadChats = async () => {
+  const loadAll = async () => {
     try {
-      const res = await chatService.listChats();
-      setChats(res.chats);
+      const [chatsRes, playlistsRes] = await Promise.all([
+        chatService.listChats(),
+        playlistService.list(),
+      ]);
+      setChats(chatsRes.chats);
+      setPlaylists(playlistsRes.playlists);
     } catch (err) {
       toast.error(getErrorMessage(err));
     } finally {
@@ -63,15 +65,27 @@ export default function Sidebar({
     }
   };
 
-  const handleDelete = async (e: React.MouseEvent, chatId: string) => {
+  const handleDeleteChat = async (e: React.MouseEvent, chatId: string) => {
     e.stopPropagation();
     if (!confirm("Delete this chat?")) return;
-
     try {
       await chatService.deleteChat(chatId);
       setChats((prev) => prev.filter((c) => c.id !== chatId));
       toast.success("Chat deleted");
       if (activeChatId === chatId) router.push("/dashboard");
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    }
+  };
+
+  const handleDeletePlaylist = async (e: React.MouseEvent, playlistId: string) => {
+    e.stopPropagation();
+    if (!confirm("Delete this playlist?")) return;
+    try {
+      await playlistService.delete(playlistId);
+      setPlaylists((prev) => prev.filter((p) => p.id !== playlistId));
+      toast.success("Playlist deleted");
+      if (activePlaylistId === playlistId) router.push("/dashboard");
     } catch (err) {
       toast.error(getErrorMessage(err));
     }
@@ -86,11 +100,14 @@ export default function Sidebar({
     (c.title || "").toLowerCase().includes(search.toLowerCase()),
   );
 
+  const filteredPlaylists = playlists.filter((p) =>
+    (p.title || "").toLowerCase().includes(search.toLowerCase()),
+  );
+
   // ===== COLLAPSED SIDEBAR =====
   if (collapsed) {
     return (
       <aside className="w-16 h-screen bg-gray-950 border-r border-gray-800 flex flex-col items-center py-3">
-        {/* Logo / Toggle */}
         <button
           onClick={onToggle}
           className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-gray-800 transition mb-2"
@@ -99,7 +116,6 @@ export default function Sidebar({
           <PanelLeftOpen size={20} className="text-gray-400" />
         </button>
 
-        {/* New Chat */}
         <button
           onClick={onNewChat}
           className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-gray-800 transition mb-2"
@@ -108,7 +124,6 @@ export default function Sidebar({
           <SquarePen size={20} className="text-gray-300" />
         </button>
 
-        {/* Playlist */}
         <button
           onClick={onNewPlaylist}
           className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-gray-800 transition mb-2"
@@ -116,19 +131,18 @@ export default function Sidebar({
         >
           <ListVideo size={20} className="text-purple-400" />
         </button>
-        {/* Search */}
+
         <button
           onClick={() => {
             onToggle();
             setTimeout(() => setShowSearch(true), 200);
           }}
           className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-gray-800 transition mb-2"
-          title="Search chats"
+          title="Search"
         >
           <Search size={20} className="text-gray-300" />
         </button>
 
-        {/* Chats */}
         <button
           onClick={onToggle}
           className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-gray-800 transition mb-2"
@@ -137,10 +151,8 @@ export default function Sidebar({
           <MessageSquare size={20} className="text-gray-300" />
         </button>
 
-        {/* Spacer */}
         <div className="flex-1" />
 
-        {/* User Avatar */}
         <button
           onClick={handleLogout}
           className="w-10 h-10 rounded-full bg-red-500 flex items-center justify-center text-white font-semibold text-sm hover:opacity-90 transition"
@@ -186,13 +198,13 @@ export default function Sidebar({
           <ListVideo size={16} className="text-purple-400" />
           New playlist
         </button>
-        
+
         <button
           onClick={() => setShowSearch((v) => !v)}
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-800 text-gray-200 text-sm font-medium transition"
         >
           <Search size={16} />
-          Search chats
+          Search
         </button>
       </div>
 
@@ -210,42 +222,96 @@ export default function Sidebar({
         </div>
       )}
 
-      {/* Chats */}
+      {/* Lists */}
       <div className="flex-1 overflow-y-auto px-2">
-        <p className="text-xs text-gray-500 px-3 py-2 font-medium">Chats</p>
-
         {loading ? (
           <div className="flex justify-center py-4">
             <Loader2 className="animate-spin text-gray-500" size={20} />
           </div>
-        ) : filteredChats.length === 0 ? (
-          <p className="text-gray-500 text-sm px-3 py-2">
-            {search ? "No matches" : "No chats yet"}
-          </p>
         ) : (
-          <div className="space-y-0.5">
-            {filteredChats.map((chat) => (
-              <div
-                key={chat.id}
-                onClick={() => router.push(`/dashboard/chat/${chat.id}`)}
-                className={`group flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition ${
-                  activeChatId === chat.id
-                    ? "bg-gray-800 text-white"
-                    : "text-gray-300 hover:bg-gray-900"
-                }`}
-              >
-                <span className="text-sm truncate flex-1">
-                  {chat.title || "Untitled Chat"}
-                </span>
-                <button
-                  onClick={(e) => handleDelete(e, chat.id)}
-                  className="opacity-0 group-hover:opacity-100 transition text-gray-500 hover:text-red-500"
-                >
-                  <Trash2 size={14} />
-                </button>
+          <>
+            {/* ===== CHATS SECTION ===== */}
+            <p className="text-xs text-gray-500 px-3 py-2 font-medium uppercase tracking-wide">
+              Chats
+            </p>
+
+            {filteredChats.length === 0 ? (
+              <p className="text-gray-500 text-sm px-3 py-1">
+                {search ? "No matches" : "No chats yet"}
+              </p>
+            ) : (
+              <div className="space-y-0.5 mb-4">
+                {filteredChats.map((chat) => (
+                  <div
+                    key={chat.id}
+                    onClick={() => router.push(`/dashboard/chat/${chat.id}`)}
+                    className={`group flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition ${
+                      activeChatId === chat.id
+                        ? "bg-gray-800 text-white"
+                        : "text-gray-300 hover:bg-gray-900"
+                    }`}
+                  >
+                    <MessageSquare size={14} className="shrink-0 text-gray-500" />
+                    <span className="text-sm truncate flex-1">
+                      {chat.title || "Untitled Chat"}
+                    </span>
+                    <button
+                      onClick={(e) => handleDeleteChat(e, chat.id)}
+                      className="opacity-0 group-hover:opacity-100 transition text-gray-500 hover:text-red-500"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            )}
+
+            {/* ===== PLAYLISTS SECTION ===== */}
+            <p className="text-xs text-gray-500 px-3 py-2 font-medium uppercase tracking-wide">
+              Playlists
+            </p>
+
+            {filteredPlaylists.length === 0 ? (
+              <p className="text-gray-500 text-sm px-3 py-1">
+                {search ? "No matches" : "No playlists yet"}
+              </p>
+            ) : (
+              <div className="space-y-0.5">
+                {filteredPlaylists.map((playlist) => (
+                  <div
+                    key={playlist.id}
+                    onClick={() =>
+                      router.push(`/dashboard/playlist/${playlist.id}`)
+                    }
+                    className={`group flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition ${
+                      activePlaylistId === playlist.id
+                        ? "bg-gray-800 text-white"
+                        : "text-gray-300 hover:bg-gray-900"
+                    }`}
+                  >
+                    <ListVideo
+                      size={14}
+                      className="shrink-0 text-purple-400"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm truncate">
+                        {playlist.title || "Untitled Playlist"}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {playlist.total_videos} videos
+                      </p>
+                    </div>
+                    <button
+                      onClick={(e) => handleDeletePlaylist(e, playlist.id)}
+                      className="opacity-0 group-hover:opacity-100 transition text-gray-500 hover:text-red-500"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
         )}
       </div>
 

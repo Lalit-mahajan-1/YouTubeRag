@@ -10,7 +10,7 @@ from app.services.rag_service import RAGService
 from app.services.youtube_service import YouTubeService
 from app.services.notes_service import NotesService
 from app.services.playlist_service import PlaylistService
-
+from app.services.agent_service import AgentService
 
 bearer_scheme = HTTPBearer()
 async def get_playlist_service(db: AsyncSession = Depends(get_db)) -> PlaylistService:
@@ -34,6 +34,8 @@ async def get_chat_service(db: AsyncSession = Depends(get_db)) -> ChatService:
 async def get_rag_service(db: AsyncSession = Depends(get_db)) -> RAGService:
     return RAGService(db)
 
+async def get_agent_service(db: AsyncSession = Depends(get_db)) -> AgentService:
+    return AgentService(db)
 
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),

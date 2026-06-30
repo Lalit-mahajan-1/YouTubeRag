@@ -16,6 +16,7 @@ export default function DashboardLayout({
   const [chatModalOpen, setChatModalOpen] = useState(false);
   const [playlistModalOpen, setPlaylistModalOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   if (isLoading) {
     return (
@@ -30,6 +31,7 @@ export default function DashboardLayout({
   return (
     <div className="flex h-screen bg-gray-900">
       <Sidebar
+        key={refreshKey}
         onNewChat={() => setChatModalOpen(true)}
         onNewPlaylist={() => setPlaylistModalOpen(true)}
         collapsed={collapsed}
@@ -44,6 +46,7 @@ export default function DashboardLayout({
       <NewPlaylistModal
         isOpen={playlistModalOpen}
         onClose={() => setPlaylistModalOpen(false)}
+        onSuccess={() => setRefreshKey((k) => k + 1)}
       />
     </div>
   );
